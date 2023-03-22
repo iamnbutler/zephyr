@@ -1,14 +1,5 @@
 // This plugin will create a code frame in the current page.
 
-function createWordFrame(word: string) {
-    const textNode = figma.createText();
-    textNode.characters = word;
-    const frame = figma.createFrame();
-    frame.resizeWithoutConstraints(textNode.width, textNode.height);
-    frame.appendChild(textNode);
-    return frame;
-}
-
 const data = {
     lines: [
         {
@@ -87,6 +78,9 @@ const data = {
     ],
 };
 
+const fontSize = 14; // Set a static font size
+const lineHeight = 20; // Set a static line height
+
 async function main(): Promise<string | undefined> {
     // Load the "Inter Regular" font before creating any text nodes using that font
     await figma.loadFontAsync({ family: "Inter", style: "Regular" });
@@ -94,12 +88,20 @@ async function main(): Promise<string | undefined> {
     const codeFrame = figma.createFrame();
     codeFrame.name = "code";
     codeFrame.layoutMode = "VERTICAL";
+    codeFrame.paddingLeft = 4;
+    codeFrame.paddingRight = 4;
+    codeFrame.paddingTop = 4;
+    codeFrame.paddingBottom = 4;
+    codeFrame.primaryAxisSizingMode = "AUTO";
+    codeFrame.counterAxisSizingMode = "AUTO";
 
     for (const line of data.lines) {
         // Create a FrameNode for the line instead of a GroupNode
         const lineFrame = figma.createFrame();
         lineFrame.name = "line";
         lineFrame.layoutMode = "HORIZONTAL";
+        lineFrame.itemSpacing = 4; // Add a 4px gap between items
+        lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
 
         for (const word of line.words) {
             const wordFrame = createWordFrame(word);
@@ -116,6 +118,17 @@ async function main(): Promise<string | undefined> {
     console.log("Plugin executed successfully!");
 
     return undefined;
+}
+
+function createWordFrame(word: string) {
+    const textNode = figma.createText();
+    textNode.characters = word;
+    textNode.fontSize = fontSize; // Use the static font size
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+    frame.appendChild(textNode);
+    return frame;
 }
 
 main().then((message: string | undefined) => {
