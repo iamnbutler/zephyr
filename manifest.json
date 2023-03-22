@@ -1,12 +1,9 @@
 {
-  "name": "Zephyr Syntax Highlighter",
-  "id": "1220028783855539447",
-  "api": "1.0.0",
-  "main": "code.js",
-  "capabilities": [],
-  "enableProposedApi": false,
-  "editorType": [
-    "figma"
-  ],
-  "ui": "ui.html"
+    "api": "1.0.0",
+    "editorType": [
+        "figma"
+    ],
+    "id": "zephyr-figma-code-highlighter",
+    "name": "zephyr",
+    "main": "code.js"
 }
