@@ -1,82 +1,64 @@
 // This plugin will create a code frame in the current page.
+interface ZTextNode {
+    value: string;
+    syntaxType: ZSyntaxType;
+}
 
-const data = {
+type ZSyntaxType = "text" | "punctuation";
+
+interface ZLine {
+    words: ZTextNode[];
+}
+
+interface ZData {
+    lines: ZLine[];
+}
+
+const data: ZData = {
     lines: [
         {
             words: [
-                "Zephyr",
-                "is",
-                "designed",
-                "for",
-                "people",
-                "that",
-                "want",
-                "highlighted",
-                "code",
-                "blocks",
-                "in",
-                "Figma",
-                "for",
-                "use",
-                "in",
-                "designing",
-                "code",
-                "editors,",
-                "and",
-                "other",
-                "software",
-                "engineering",
-                "tools.",
+                { value: "This", syntaxType: "text" },
+                { value: "is", syntaxType: "text" },
+                { value: "the", syntaxType: "text" },
+                { value: "first", syntaxType: "text" },
+                { value: "line", syntaxType: "text" },
+                { value: ".", syntaxType: "punctuation" },
             ],
         },
         {
             words: [
-                "These",
-                "tools",
-                "have",
-                "many",
-                "states",
-                "and",
-                "feature",
-                "that",
-                "require",
-                "being",
-                "able",
-                "to",
-                "style",
-                "individual",
-                "text",
-                "notes.",
+                { value: "This", syntaxType: "text" },
+                { value: "is", syntaxType: "text" },
+                { value: "the", syntaxType: "text" },
+                { value: "second", syntaxType: "text" },
+                { value: "line", syntaxType: "text" },
+                { value: ".", syntaxType: "punctuation" },
             ],
         },
         {
             words: [
-                "Zephyr",
-                "was",
-                "build",
-                "out",
-                "of",
-                "frustration",
-                "of",
-                "the",
-                "current",
-                "state",
-                "of",
-                "plugins",
-                "in",
-                "this",
-                "space",
-                "and",
-                "needing",
-                "more",
-                "control",
-                "over",
-                "the",
-                "output.",
+                { value: "This", syntaxType: "text" },
+                { value: "is", syntaxType: "text" },
+                { value: "the", syntaxType: "text" },
+                { value: "third", syntaxType: "text" },
+                { value: "line", syntaxType: "text" },
+                { value: ".", syntaxType: "punctuation" },
+            ],
+        },
+        {
+            words: [
+                { value: "This", syntaxType: "text" },
+                { value: "is", syntaxType: "text" },
+                { value: "the", syntaxType: "text" },
+                { value: "fourth", syntaxType: "text" },
+                { value: "line", syntaxType: "text" },
+                { value: ".", syntaxType: "punctuation" },
             ],
         },
     ],
 };
+
 
 const fontSize = 14; // Set a static font size
 const lineHeight = 20; // Set a static line height
@@ -120,11 +102,19 @@ async function main(): Promise<string | undefined> {
     return undefined;
 }
 
-function createWordFrame(word: string) {
+function createWordFrame(word: ZTextNode) {
+    const { value, syntaxType } = word
+
     const textNode = figma.createText();
-    textNode.characters = word;
+    textNode.characters = value;
     textNode.fontSize = fontSize; // Use the static font size
     textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+
+    // Set the text color to light gray for punctuation nodes
+    if (syntaxType === "punctuation") {
+        textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
+    }
+
     const frame = figma.createFrame();
     frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
     frame.appendChild(textNode);
