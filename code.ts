@@ -1,45 +1,123 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
+// This plugin will create a code frame in the current page.
 
 function createWordFrame(word: string) {
-    const frame = figma.createFrame();
     const textNode = figma.createText();
     textNode.characters = word;
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, textNode.height);
     frame.appendChild(textNode);
     return frame;
 }
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = async msg => {
-    if (msg.type === 'run-plugin') {
-        const data = await figma.clientStorage.getAsync('json-data');
-        const jsonData = JSON.parse(data);
-        const codeFrame = figma.createFrame();
-        codeFrame.name = 'code';
-        codeFrame.layoutMode = 'VERTICAL';
+const data = {
+    lines: [
+        {
+            words: [
+                "Zephyr",
+                "is",
+                "designed",
+                "for",
+                "people",
+                "that",
+                "want",
+                "highlighted",
+                "code",
+                "blocks",
+                "in",
+                "Figma",
+                "for",
+                "use",
+                "in",
+                "designing",
+                "code",
+                "editors,",
+                "and",
+                "other",
+                "software",
+                "engineering",
+                "tools.",
+            ],
+        },
+        {
+            words: [
+                "These",
+                "tools",
+                "have",
+                "many",
+                "states",
+                "and",
+                "feature",
+                "that",
+                "require",
+                "being",
+                "able",
+                "to",
+                "style",
+                "individual",
+                "text",
+                "notes.",
+            ],
+        },
+        {
+            words: [
+                "Zephyr",
+                "was",
+                "build",
+                "out",
+                "of",
+                "frustration",
+                "of",
+                "the",
+                "current",
+                "state",
+                "of",
+                "plugins",
+                "in",
+                "this",
+                "space",
+                "and",
+                "needing",
+                "more",
+                "control",
+                "over",
+                "the",
+                "output.",
+            ],
+        },
+    ],
+};
 
-        for (const line of jsonData.lines) {
-            const lineFrame = figma.createFrame();
-            lineFrame.name = 'line';
-            lineFrame.layoutMode = 'HORIZONTAL';
+async function main(): Promise<string | undefined> {
+    // Load the "Inter Regular" font before creating any text nodes using that font
+    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
 
-            for (const word of line.words) {
-                const wordFrame = createWordFrame(word);
-                lineFrame.appendChild(wordFrame);
-            }
+    const codeFrame = figma.createFrame();
+    codeFrame.name = "code";
+    codeFrame.layoutMode = "VERTICAL";
 
-            codeFrame.appendChild(lineFrame);
+    for (const line of data.lines) {
+        // Create a FrameNode for the line instead of a GroupNode
+        const lineFrame = figma.createFrame();
+        lineFrame.name = "line";
+        lineFrame.layoutMode = "HORIZONTAL";
+
+        for (const word of line.words) {
+            const wordFrame = createWordFrame(word);
+            lineFrame.appendChild(wordFrame);
         }
 
-        figma.currentPage.appendChild(codeFrame);
-        figma.viewport.scrollAndZoomIntoView([codeFrame]);
+        codeFrame.appendChild(lineFrame);
+    }
 
-        figma.closePlugin();
-    };
-};
+    figma.currentPage.appendChild(codeFrame);
+    figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
+    // Log the output to help debug issues
+    console.log("Plugin executed successfully!");
+
+    return undefined;
+}
+
+main().then((message: string | undefined) => {
+    figma.closePlugin(message);
+});

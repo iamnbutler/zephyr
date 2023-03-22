@@ -16,23 +16,24 @@ zephyr/
     manifest.json
     tsconfig.json
     project.txt
-    data/
-        text.json
 
 --------------------------------------------------------------------------------
 # File: /Users/natebutler/Code/nate/zephyr/types.js | Lines: 1 | Bytes: 14
 "use strict";
 
 --------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/code.js | Lines: 43 | Bytes: 1810
+# File: /Users/natebutler/Code/nate/zephyr/code.js | Lines: 123 | Bytes: 3829
 "use strict";
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
-// This shows the HTML page in "ui.html".
-figma.showUI(__html__);
+// This plugin will create a code frame in the current page.
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 function createWordFrame(word) {
     const frame = figma.createFrame();
     const textNode = figma.createText();
@@ -40,20 +41,95 @@ function createWordFrame(word) {
     frame.appendChild(textNode);
     return frame;
 }
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = msg => {
-    if (msg.type === 'load-json') {
-        const data = msg.data;
+const data = {
+    lines: [
+        {
+            words: [
+                "Zephyr",
+                "is",
+                "designed",
+                "for",
+                "people",
+                "that",
+                "want",
+                "highlighted",
+                "code",
+                "blocks",
+                "in",
+                "Figma",
+                "for",
+                "use",
+                "in",
+                "designing",
+                "code",
+                "editors,",
+                "and",
+                "other",
+                "software",
+                "engineering",
+                "tools.",
+            ],
+        },
+        {
+            words: [
+                "These",
+                "tools",
+                "have",
+                "many",
+                "states",
+                "and",
+                "feature",
+                "that",
+                "require",
+                "being",
+                "able",
+                "to",
+                "style",
+                "individual",
+                "text",
+                "notes.",
+            ],
+        },
+        {
+            words: [
+                "Zephyr",
+                "was",
+                "build",
+                "out",
+                "of",
+                "frustration",
+                "of",
+                "the",
+                "current",
+                "state",
+                "of",
+                "plugins",
+                "in",
+                "this",
+                "space",
+                "and",
+                "needing",
+                "more",
+                "control",
+                "over",
+                "the",
+                "output.",
+            ],
+        },
+    ],
+};
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Load the "Inter Regular" font before creating any text nodes using that font
+        yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
         const codeFrame = figma.createFrame();
-        codeFrame.name = 'code';
-        codeFrame.layoutMode = 'VERTICAL';
+        codeFrame.name = "code";
+        codeFrame.layoutMode = "VERTICAL";
         for (const line of data.lines) {
             // Create a FrameNode for the line instead of a GroupNode
             const lineFrame = figma.createFrame();
-            lineFrame.name = 'line';
-            lineFrame.layoutMode = 'HORIZONTAL';
+            lineFrame.name = "line";
+            lineFrame.layoutMode = "HORIZONTAL";
             for (const word of line.words) {
                 const wordFrame = createWordFrame(word);
                 lineFrame.appendChild(wordFrame);
@@ -62,12 +138,14 @@ figma.ui.onmessage = msg => {
         }
         figma.currentPage.appendChild(codeFrame);
         figma.viewport.scrollAndZoomIntoView([codeFrame]);
-        // Make sure to close the plugin when you're done. Otherwise the plugin will
-        // keep running, which shows the cancel button at the bottom of the screen.
-        figma.closePlugin();
-    }
-    ;
-};
+        // Log the output to help debug issues
+        console.log("Plugin executed successfully!");
+        return undefined;
+    });
+}
+main().then((message) => {
+    figma.closePlugin(message);
+});
 
 --------------------------------------------------------------------------------
 # File: /Users/natebutler/Code/nate/zephyr/README.md | Lines: 16 | Bytes: 766
@@ -124,54 +202,129 @@ interface SyntaxColors {
 }
 
 --------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/code.ts | Lines: 47 | Bytes: 1626
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
+# File: /Users/natebutler/Code/nate/zephyr/code.ts | Lines: 122 | Bytes: 3058
+// This plugin will create a code frame in the current page.
 
 function createWordFrame(word: string) {
-  const frame = figma.createFrame();
-  const textNode = figma.createText();
-  textNode.characters = word;
-  frame.appendChild(textNode);
-  return frame;
+    const frame = figma.createFrame();
+    const textNode = figma.createText();
+    textNode.characters = word;
+    frame.appendChild(textNode);
+    return frame;
 }
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = (msg) => {
-  if (msg.type === "load-json") {
-    const data = msg.data;
+const data = {
+    lines: [
+        {
+            words: [
+                "Zephyr",
+                "is",
+                "designed",
+                "for",
+                "people",
+                "that",
+                "want",
+                "highlighted",
+                "code",
+                "blocks",
+                "in",
+                "Figma",
+                "for",
+                "use",
+                "in",
+                "designing",
+                "code",
+                "editors,",
+                "and",
+                "other",
+                "software",
+                "engineering",
+                "tools.",
+            ],
+        },
+        {
+            words: [
+                "These",
+                "tools",
+                "have",
+                "many",
+                "states",
+                "and",
+                "feature",
+                "that",
+                "require",
+                "being",
+                "able",
+                "to",
+                "style",
+                "individual",
+                "text",
+                "notes.",
+            ],
+        },
+        {
+            words: [
+                "Zephyr",
+                "was",
+                "build",
+                "out",
+                "of",
+                "frustration",
+                "of",
+                "the",
+                "current",
+                "state",
+                "of",
+                "plugins",
+                "in",
+                "this",
+                "space",
+                "and",
+                "needing",
+                "more",
+                "control",
+                "over",
+                "the",
+                "output.",
+            ],
+        },
+    ],
+};
+
+async function main(): Promise<string | undefined> {
+    // Load the "Inter Regular" font before creating any text nodes using that font
+    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+
     const codeFrame = figma.createFrame();
     codeFrame.name = "code";
     codeFrame.layoutMode = "VERTICAL";
 
     for (const line of data.lines) {
-      // Create a FrameNode for the line instead of a GroupNode
-      const lineFrame = figma.createFrame();
-      lineFrame.name = "line";
-      lineFrame.layoutMode = "HORIZONTAL";
+        // Create a FrameNode for the line instead of a GroupNode
+        const lineFrame = figma.createFrame();
+        lineFrame.name = "line";
+        lineFrame.layoutMode = "HORIZONTAL";
 
-      for (const word of line.words) {
-        const wordFrame = createWordFrame(word);
-        lineFrame.appendChild(wordFrame);
-      }
+        for (const word of line.words) {
+            const wordFrame = createWordFrame(word);
+            lineFrame.appendChild(wordFrame);
+        }
 
-      codeFrame.appendChild(lineFrame);
+        codeFrame.appendChild(lineFrame);
     }
 
     figma.currentPage.appendChild(codeFrame);
     figma.viewport.scrollAndZoomIntoView([codeFrame]);
 
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
-    figma.closePlugin();
-  }
-};
+    // Log the output to help debug issues
+    console.log("Plugin executed successfully!");
+
+    return undefined;
+}
+
+main().then((message: string | undefined) => {
+    figma.closePlugin(message);
+});
 
 --------------------------------------------------------------------------------
 # File: /Users/natebutler/Code/nate/zephyr/package.json | Lines: 16 | Bytes: 336
@@ -215,85 +368,5 @@ figma.ui.onmessage = (msg) => {
       "./node_modules/@figma"
     ]
   }
-}
-
---------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/data/text.json | Lines: 77 | Bytes: 1721
-{
-    "lines": [
-        {
-            "words": [
-                "Zephyr",
-                "is",
-                "designed",
-                "for",
-                "people",
-                "that",
-                "want",
-                "highlighted",
-                "code",
-                "blocks",
-                "in",
-                "Figma",
-                "for",
-                "use",
-                "in",
-                "designing",
-                "code",
-                "editors,",
-                "and",
-                "other",
-                "software",
-                "engineering",
-                "tools."
-            ]
-        },
-        {
-            "words": [
-                "These",
-                "tools",
-                "have",
-                "many",
-                "states",
-                "and",
-                "feature",
-                "that",
-                "require",
-                "being",
-                "able",
-                "to",
-                "style",
-                "individual",
-                "text",
-                "notes."
-            ]
-        },
-        {
-            "words": [
-                "Zephyr",
-                "was",
-                "build",
-                "out",
-                "of",
-                "frustration",
-                "of",
-                "the",
-                "current",
-                "state",
-                "of",
-                "plugins",
-                "in",
-                "this",
-                "space",
-                "and",
-                "needing",
-                "more",
-                "control",
-                "over",
-                "the",
-                "output."
-            ]
-        }
-    ]
 }
 
