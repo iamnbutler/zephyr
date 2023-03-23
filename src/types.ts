@@ -131,9 +131,7 @@ type TypeCategory =
   // Example: interface MyInterface { myMethod(): void; };
   | "interface";
 
-type VariableCategory =
-  | "variable"
-  | "variable.special";
+type VariableCategory = "variable" | "variable.special";
 
 type FunctionCategory =
   // Regular functions and methods
@@ -155,7 +153,6 @@ type FunctionCategory =
   // Special function definitions, where the special function is being declared
   // Example: (Python) __init__(self, x, y):
   | "function.special.definition";
-
 
 type PunctuationCategory = "punctuation.bracket";
 
@@ -197,7 +194,7 @@ type TypeScriptSpecificCategory =
 
   // TypeScript type annotations
   // Example: let x: number = 42;
-  | "type.annotation"
+  | "type.annotation";
 
 export interface SyntaxColors {
   module: string;

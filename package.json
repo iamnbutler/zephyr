@@ -13,14 +13,9 @@
   "devDependencies": {
     "@figma/plugin-typings": "*",
     "prettier": "^2.8.6",
-    "tree-sitter-cli": "^0.20.7",
-    "tree-sitter-rust": "^0.20.3",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.2",
     "webpack": "^5.76.3",
     "webpack-cli": "^5.0.1"
-  },
-  "dependencies": {
-    "web-tree-sitter": "^0.20.7"
   }
 }

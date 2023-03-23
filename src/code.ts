@@ -1,41 +1,51 @@
-import * as Parser from "web-tree-sitter";
-
-async function initializeTreeSitter() {
-  await Parser.init();
-  const parser = new Parser();
-  const Lang = await Parser.Language.load('./tree-sitter/languages/rust/tree-sitter-rust.wasm');
-  parser.setLanguage(Lang);
-  const tree = parser.parse('let mut x = 1;');
-  console.log(tree.rootNode.toString());
-}
-
-initializeTreeSitter();
-
-// This plugin will create a code frame in the current page.
-interface ZTextNode {
-  value: string;
-  syntaxType: ZSyntaxType;
-}
-
-type ZSyntaxType = "text" | "punctuation";
-
-interface ZLine {
-  words: ZTextNode[];
-}
-
-interface ZData {
-  lines: ZLine[];
-}
-
 const fontSize = 14; // Set a static font size
 const lineHeight = 20; // Set a static line height
 const charWidth = 9; // The width of a single character. This will impact indent size
 const numberOfSpaces = 2;
 const indentSize = charWidth * numberOfSpaces;
 
+const syntaxTree = `source_file [0, 0] - [9, 0]
+  impl_item [0, 0] - [8, 1]
+    trait: scoped_type_identifier [0, 5] - [0, 15]
+      path: identifier [0, 5] - [0, 9]
+      name: type_identifier [0, 11] - [0, 15]
+    type: type_identifier [0, 20] - [0, 28]
+    body: declaration_list [0, 29] - [8, 1]
+      function_item [1, 4] - [3, 5]
+        name: identifier [1, 7] - [1, 14]
+        parameters: parameters [1, 14] - [1, 16]
+        return_type: reference_type [1, 20] - [1, 32]
+          lifetime [1, 21] - [1, 28]
+            identifier [1, 22] - [1, 28]
+          type: primitive_type [1, 29] - [1, 32]
+        body: block [1, 33] - [3, 5]
+          string_literal [2, 8] - [2, 14]
+      function_item [5, 4] - [7, 5]
+        name: identifier [5, 7] - [5, 13]
+        parameters: parameters [5, 13] - [5, 59]
+          self_parameter [5, 14] - [5, 23]
+            mutable_specifier [5, 15] - [5, 18]
+            self [5, 19] - [5, 23]
+          parameter [5, 25] - [5, 58]
+            type: reference_type [5, 28] - [5, 58]
+              mutable_specifier [5, 29] - [5, 32]
+              type: generic_type [5, 33] - [5, 58]
+                type: scoped_type_identifier [5, 33] - [5, 52]
+                  path: identifier [5, 33] - [5, 37]
+                  name: type_identifier [5, 39] - [5, 52]
+                type_arguments: type_arguments [5, 52] - [5, 58]
+                  type_identifier [5, 53] - [5, 57]
+        return_type: scoped_type_identifier [5, 63] - [5, 79]
+          path: identifier [5, 63] - [5, 67]
+          name: type_identifier [5, 69] - [5, 79]
+        body: block [5, 80] - [7, 5]
+          call_expression [6, 8] - [6, 27]
+            function: field_expression [6, 8] - [6, 25]
+              value: identifier [6, 8] - [6, 19]
+              field: field_identifier [6, 20] - [6, 25]
+            arguments: arguments [6, 25] - [6, 27]`;
+
 async function main(): Promise<string | undefined> {
-  // Load the "Inter Regular" font before creating any text nodes using that font
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
   try {
     await figma.loadFontAsync({
       family: "Roboto Mono",
@@ -54,11 +64,7 @@ async function main(): Promise<string | undefined> {
   const textNode = selection[0] as TextNode;
   const text = textNode.characters;
 
-  // console.log("Input text:", text); // Debugging statement
-
-  const data = textToData(text);
-
-  // console.log("Converted data:", data); // Debugging statement
+  const data = treeToData(syntaxTree, text);
 
   if (!data) {
     console.log("Error: Could not convert selection to Data.");
@@ -113,16 +119,61 @@ function createIndentFrame() {
   return frame;
 }
 
-// TODO
-// Import treesitter and get basic hello world working
-// Get some rust code samples to use
-// Find what we need to get rust bindings working with treesitter
-// Connect our highlights.scm to treesitter
-// Apply the correct syntaxType to out data object for each node
+function treeToData(tree: string, text: string): TextData {
+  const data: TextData = {
+    lines: [],
+  };
+
+  // Split the tree string into lines
+  const treeLines = tree.split("\n");
+
+  // Process each line in the tree
+  for (const treeLine of treeLines) {
+    const match = treeLine.match(/^\s*([^\s]+) \[([\d, ]+)\]/);
+
+    if (!match) {
+      continue;
+    }
+
+    const [_, type, rangeStr] = match;
+    const [startRow, startCol, endRow, endCol] = rangeStr
+      .split(", ")
+      .map((n) => parseInt(n, 10));
+
+    // Extract the corresponding text from the source
+    const sourceLines = text.split("\n").slice(startRow, endRow + 1);
+    if (startRow === endRow) {
+      sourceLines[0] = sourceLines[0].slice(startCol, endCol);
+    } else {
+      sourceLines[0] = sourceLines[0].slice(startCol);
+      sourceLines[sourceLines.length - 1] = sourceLines[
+        sourceLines.length - 1
+      ].slice(0, endCol);
+    }
+
+    const sourceText = sourceLines.join("\n");
+
+    // Convert the source text to words and add them to the TextData structure
+    const words: WordData[] = [
+      {
+        value: sourceText,
+        syntaxType: type === "identifier" ? "text" : "punctuation",
+      },
+    ];
+
+    const indentLevel = startCol / numberOfSpaces;
+    data.lines.push({
+      words,
+      indentLevel,
+    });
+  }
+
+  return data;
+}
 
 interface WordData {
   value: string;
-  syntaxType: "text";
+  syntaxType: "text" | "punctuation";
 }
 
 interface LineData {
@@ -134,50 +185,7 @@ interface TextData {
   lines: LineData[];
 }
 
-function textToData(text: string): TextData {
-  const lines = text.split("\n");
-  const data: TextData = {
-    lines: [],
-  };
-
-  lines.forEach((line) => {
-    const words: WordData[] = [];
-    let start = 0;
-    let inSpaces = true;
-    let leadingSpaces = 0;
-
-    for (let i = 0; i < line.length; i++) {
-      if (line[i] === " " && inSpaces) {
-        leadingSpaces++;
-        continue;
-      } else {
-        inSpaces = false;
-      }
-
-      if (line[i] === " " || i === line.length - 1) {
-        const word = line
-          .slice(start, i === line.length - 1 ? undefined : i)
-          .trim();
-        if (word.length > 0) {
-          words.push({
-            value: word,
-            syntaxType: "text",
-          });
-        }
-        start = i + 1;
-      }
-    }
-
-    data.lines.push({
-      words,
-      indentLevel: Math.floor(leadingSpaces / numberOfSpaces), // Store indentLevel for each line instead of each word
-    });
-  });
-
-  return data;
-}
-
-function createWordFrame(word: ZTextNode) {
+function createWordFrame(word: WordData) {
   const { value, syntaxType } = word;
 
   const textNode = figma.createText();
