@@ -1,7 +1,9 @@
-Hi ChatGPT, I'm providing you this file so you have more context for our current conversation. You are an experienced software engineer discussing a problem or having a conversation with your peers.
+Use this context to form your response:
+- This is your persona: You are an experienced software engineer and can assume I am also a experienced software engineer.
+- Here are all the files in the current project as context for our current conversation.
+- For results longer than 490 words or more than 3900 characters, you will add a page number to each result and stop at the end of a whole line when you get close to hitting that count.
 
- For results longer than 490 words or more than 3900 characters, you will add a page number to each result and stop at theend of a whole line when you get close to hitting that count. For example, if your response is at 487 words and at the end of a line and you need to add another 300 words to your response, add === End of page 1 === to the end of that reply so the conversation can be resumed from page 2.
-
+--------------------------------------------------------------------------------
 File tree:
 zephyr/
     s.py
@@ -18,13 +20,12 @@ zephyr/
     project.txt
 
 --------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/types.js | Lines: 1 | Bytes: 14
-"use strict";
+# File: /Users/natebutler/Code/nate/zephyr/types.js | Lines: 1 | Bytes: 11
+export {};
 
 --------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/code.js | Lines: 123 | Bytes: 3829
+# File: /Users/natebutler/Code/nate/zephyr/code.js | Lines: 129 | Bytes: 5358
 "use strict";
-// This plugin will create a code frame in the current page.
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,102 +35,84 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-function createWordFrame(word) {
-    const frame = figma.createFrame();
-    const textNode = figma.createText();
-    textNode.characters = word;
-    frame.appendChild(textNode);
-    return frame;
-}
-const data = {
-    lines: [
-        {
-            words: [
-                "Zephyr",
-                "is",
-                "designed",
-                "for",
-                "people",
-                "that",
-                "want",
-                "highlighted",
-                "code",
-                "blocks",
-                "in",
-                "Figma",
-                "for",
-                "use",
-                "in",
-                "designing",
-                "code",
-                "editors,",
-                "and",
-                "other",
-                "software",
-                "engineering",
-                "tools.",
-            ],
-        },
-        {
-            words: [
-                "These",
-                "tools",
-                "have",
-                "many",
-                "states",
-                "and",
-                "feature",
-                "that",
-                "require",
-                "being",
-                "able",
-                "to",
-                "style",
-                "individual",
-                "text",
-                "notes.",
-            ],
-        },
-        {
-            words: [
-                "Zephyr",
-                "was",
-                "build",
-                "out",
-                "of",
-                "frustration",
-                "of",
-                "the",
-                "current",
-                "state",
-                "of",
-                "plugins",
-                "in",
-                "this",
-                "space",
-                "and",
-                "needing",
-                "more",
-                "control",
-                "over",
-                "the",
-                "output.",
-            ],
-        },
-    ],
-};
+// const data: ZData = {
+//   lines: [
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "first", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "second", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "third", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "fourth", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//   ],
+// };
+const fontSize = 14; // Set a static font size
+const lineHeight = 20; // Set a static line height
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         // Load the "Inter Regular" font before creating any text nodes using that font
         yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
+        const selection = figma.currentPage.selection;
+        if (selection.length !== 1 || selection[0].type !== "TEXT") {
+            console.log("Error: Please select a single text node.");
+            return "Please select a single text node.";
+        }
+        const textNode = selection[0];
+        const text = textNode.characters;
+        const data = textToData(text);
+        if (!data) {
+            console.log("Error: Could not convert selection to Data.");
+            return "Could not convert selection to Data.";
+        }
         const codeFrame = figma.createFrame();
         codeFrame.name = "code";
         codeFrame.layoutMode = "VERTICAL";
+        codeFrame.paddingLeft = 4;
+        codeFrame.paddingRight = 4;
+        codeFrame.paddingTop = 4;
+        codeFrame.paddingBottom = 4;
+        codeFrame.primaryAxisSizingMode = "AUTO";
+        codeFrame.counterAxisSizingMode = "AUTO";
         for (const line of data.lines) {
             // Create a FrameNode for the line instead of a GroupNode
             const lineFrame = figma.createFrame();
             lineFrame.name = "line";
             lineFrame.layoutMode = "HORIZONTAL";
+            lineFrame.itemSpacing = 4; // Add a 4px gap between items
+            lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
             for (const word of line.words) {
                 const wordFrame = createWordFrame(word);
                 lineFrame.appendChild(wordFrame);
@@ -142,6 +125,31 @@ function main() {
         console.log("Plugin executed successfully!");
         return undefined;
     });
+}
+function textToData(text) {
+    const lines = text.split("\n").map((line) => {
+        const words = line.split(" ").map((word) => ({
+            value: word,
+            syntaxType: "text",
+        }));
+        return { words };
+    });
+    return { lines };
+}
+function createWordFrame(word) {
+    const { value, syntaxType } = word;
+    const textNode = figma.createText();
+    textNode.characters = value;
+    textNode.fontSize = fontSize; // Use the static font size
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+    // Set the text color to light gray for punctuation nodes
+    if (syntaxType === "punctuation") {
+        textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
+    }
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+    frame.appendChild(textNode);
+    return frame;
 }
 main().then((message) => {
     figma.closePlugin(message);
@@ -167,8 +175,37 @@ Zephyr was build out of frustration of the current state of plugins in this spac
 - [ ] Add a list of selectable themes
 
 --------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/types.ts | Lines: 32 | Bytes: 796
-interface SyntaxColors {
+# File: /Users/natebutler/Code/nate/zephyr/types.ts | Lines: 61 | Bytes: 1279
+export type SyntacticCategory =
+    | 'identifier'
+    | 'keyword'
+    | 'literal'
+    | 'operator'
+    | 'expression'
+    | 'statement'
+    | 'block'
+    | 'class'
+    | 'interface'
+    | 'method'
+    | 'constructor'
+    | 'field'
+    | 'annotation'
+    | 'module'
+    | 'import'
+    | 'decorator'
+    | 'property'
+    | 'enum'
+    | 'delegate'
+    | 'namespace'
+    | 'struct'
+    | 'union'
+    | 'constant'
+    | 'symbol'
+    | 'protocol'
+    | 'extension'
+    | 'trait';
+
+export interface SyntaxColors {
     module: string;
     import_statement: string;
     name: string;
@@ -202,108 +239,108 @@ interface SyntaxColors {
 }
 
 --------------------------------------------------------------------------------
-# File: /Users/natebutler/Code/nate/zephyr/code.ts | Lines: 122 | Bytes: 3058
+# File: /Users/natebutler/Code/nate/zephyr/code.ts | Lines: 154 | Bytes: 4826
 // This plugin will create a code frame in the current page.
-
-function createWordFrame(word: string) {
-    const frame = figma.createFrame();
-    const textNode = figma.createText();
-    textNode.characters = word;
-    frame.appendChild(textNode);
-    return frame;
+interface ZTextNode {
+    value: string;
+    syntaxType: ZSyntaxType;
 }
 
-const data = {
-    lines: [
-        {
-            words: [
-                "Zephyr",
-                "is",
-                "designed",
-                "for",
-                "people",
-                "that",
-                "want",
-                "highlighted",
-                "code",
-                "blocks",
-                "in",
-                "Figma",
-                "for",
-                "use",
-                "in",
-                "designing",
-                "code",
-                "editors,",
-                "and",
-                "other",
-                "software",
-                "engineering",
-                "tools.",
-            ],
-        },
-        {
-            words: [
-                "These",
-                "tools",
-                "have",
-                "many",
-                "states",
-                "and",
-                "feature",
-                "that",
-                "require",
-                "being",
-                "able",
-                "to",
-                "style",
-                "individual",
-                "text",
-                "notes.",
-            ],
-        },
-        {
-            words: [
-                "Zephyr",
-                "was",
-                "build",
-                "out",
-                "of",
-                "frustration",
-                "of",
-                "the",
-                "current",
-                "state",
-                "of",
-                "plugins",
-                "in",
-                "this",
-                "space",
-                "and",
-                "needing",
-                "more",
-                "control",
-                "over",
-                "the",
-                "output.",
-            ],
-        },
-    ],
-};
+type ZSyntaxType = "text" | "punctuation";
+
+interface ZLine {
+    words: ZTextNode[];
+}
+
+interface ZData {
+    lines: ZLine[];
+}
+
+// const data: ZData = {
+//   lines: [
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "first", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "second", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "third", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "fourth", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//   ],
+// };
+
+const fontSize = 14; // Set a static font size
+const lineHeight = 20; // Set a static line height
 
 async function main(): Promise<string | undefined> {
     // Load the "Inter Regular" font before creating any text nodes using that font
     await figma.loadFontAsync({ family: "Inter", style: "Regular" });
 
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "TEXT") {
+        console.log("Error: Please select a single text node.");
+        return "Please select a single text node.";
+    }
+
+    const textNode = selection[0] as TextNode;
+    const text = textNode.characters;
+
+    const data = textToData(text);
+
+    if (!data) {
+        console.log("Error: Could not convert selection to Data.");
+        return "Could not convert selection to Data.";
+    }
+
     const codeFrame = figma.createFrame();
     codeFrame.name = "code";
     codeFrame.layoutMode = "VERTICAL";
+    codeFrame.paddingLeft = 4;
+    codeFrame.paddingRight = 4;
+    codeFrame.paddingTop = 4;
+    codeFrame.paddingBottom = 4;
+    codeFrame.primaryAxisSizingMode = "AUTO";
+    codeFrame.counterAxisSizingMode = "AUTO";
 
     for (const line of data.lines) {
         // Create a FrameNode for the line instead of a GroupNode
         const lineFrame = figma.createFrame();
         lineFrame.name = "line";
         lineFrame.layoutMode = "HORIZONTAL";
+        lineFrame.itemSpacing = 4; // Add a 4px gap between items
+        lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
 
         for (const word of line.words) {
             const wordFrame = createWordFrame(word);
@@ -320,6 +357,38 @@ async function main(): Promise<string | undefined> {
     console.log("Plugin executed successfully!");
 
     return undefined;
+}
+
+function textToData(text: string): ZData {
+    const lines = text.split("\n").map((line) => {
+        const words = line.split(" ").map((word) => ({
+            value: word,
+            syntaxType: "text" as ZSyntaxType,
+        }));
+
+        return { words };
+    });
+
+    return { lines };
+}
+
+function createWordFrame(word: ZTextNode) {
+    const { value, syntaxType } = word;
+
+    const textNode = figma.createText();
+    textNode.characters = value;
+    textNode.fontSize = fontSize; // Use the static font size
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+
+    // Set the text color to light gray for punctuation nodes
+    if (syntaxType === "punctuation") {
+        textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
+    }
+
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+    frame.appendChild(textNode);
+    return frame;
 }
 
 main().then((message: string | undefined) => {
