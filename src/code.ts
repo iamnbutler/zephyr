@@ -1,5 +1,4 @@
-import * as Prism from 'prismjs';
-import 'prismjs/components/prism-rust'; // Load the Rust language definition for Prism
+import { lexer, language } from "./lexer";
 
 const fontSize = 14;
 const lineHeight = 20;
@@ -18,58 +17,18 @@ const staticText = `impl gpui::View for TextView {
 }
 `
 
-const syntaxTree = `source_file [0, 0] - [10, 0]
-  impl_item [0, 0] - [8, 1]
-    trait: scoped_type_identifier [0, 5] - [0, 15]
-      path: identifier [0, 5] - [0, 9]
-      name: type_identifier [0, 11] - [0, 15]
-    type: type_identifier [0, 20] - [0, 28]
-    body: declaration_list [0, 29] - [8, 1]
-      function_item [1, 2] - [3, 3]
-        name: identifier [1, 5] - [1, 12]
-        parameters: parameters [1, 12] - [1, 14]
-        return_type: reference_type [1, 18] - [1, 31]
-          lifetime [1, 20] - [1, 27]
-            identifier [1, 21] - [1, 27]
-          type: primitive_type [1, 28] - [1, 31]
-        body: block [1, 32] - [3, 3]
-          string_literal [2, 4] - [2, 10]
-      function_item [5, 2] - [7, 3]
-        name: identifier [5, 5] - [5, 11]
-        parameters: parameters [5, 11] - [5, 60]
-          self_parameter [5, 12] - [5, 22]
-            mutable_specifier [5, 14] - [5, 17]
-            self [5, 18] - [5, 22]
-          parameter [5, 24] - [5, 59]
-            type: reference_type [5, 27] - [5, 59]
-              mutable_specifier [5, 29] - [5, 32]
-              type: generic_type [5, 33] - [5, 59]
-                type: scoped_type_identifier [5, 33] - [5, 53]
-                  path: identifier [5, 33] - [5, 37]
-                  name: type_identifier [5, 40] - [5, 53]
-                type_arguments: type_arguments [5, 53] - [5, 59]
-                  type_identifier [5, 54] - [5, 58]
-        return_type: scoped_type_identifier [5, 64] - [5, 80]
-          path: identifier [5, 64] - [5, 68]
-          name: type_identifier [5, 70] - [5, 80]
-        body: block [5, 81] - [7, 3]
-          call_expression [6, 4] - [6, 23]
-            function: field_expression [6, 4] - [6, 21]
-              value: identifier [6, 4] - [6, 15]
-              field: field_identifier [6, 16] - [6, 21]
-            arguments: arguments [6, 21] - [6, 23]`;
-
-const highlightedCode = Prism.highlight(staticText, Prism.languages.rust, 'rust');
-const jsonOutput = Prism.highlightWithResult(staticText, Prism.languages.rust, 'rust');
+const stringToTokens = lexer(language.rust)
+const tokens = stringToTokens.reset(staticText)
+for (const token of tokens) {
+  console.log(token);
+}
 
 async function main(): Promise<string | undefined> {
   await loadFont();
-  console.log(highlightedCode);
-  console.log(jsonOutput);
-  const data = treeToData(syntaxTree, staticText);
-  const codeFrame = createCodeFrame(data);
-  figma.currentPage.appendChild(codeFrame);
-  figma.viewport.scrollAndZoomIntoView([codeFrame]);
+  // const data = treeToData(syntaxTree, staticText);
+  // const codeFrame = createCodeFrame(data);
+  // figma.currentPage.appendChild(codeFrame);
+  // figma.viewport.scrollAndZoomIntoView([codeFrame]);
   console.log("Plugin executed successfully!");
   return undefined;
 }
