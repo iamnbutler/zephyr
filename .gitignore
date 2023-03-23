@@ -6,4 +6,5 @@ node_modules
 out/
 dist/
 code.js
-gpt/
+s.py
+project.txt
