@@ -1,33 +1,183 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
+// This plugin will create a code frame in the current page.
+interface ZTextNode {
+    value: string;
+    syntaxType: ZSyntaxType;
+}
 
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
+type ZSyntaxType = "text" | "punctuation";
 
-// This shows the HTML page in "ui.html".
-figma.showUI(__html__);
+interface ZLine {
+    words: ZTextNode[];
+}
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = msg => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === 'create-rectangles') {
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < msg.count; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
+interface ZData {
+    lines: ZLine[];
+}
+
+const fontSize = 14; // Set a static font size
+const lineHeight = 20; // Set a static line height
+const charWidth = 9; // The width of a single character. This will impact indent size
+const numberOfSpaces = 2;
+const indentSize = charWidth * numberOfSpaces;
+
+async function main(): Promise<string | undefined> {
+    // Load the "Inter Regular" font before creating any text nodes using that font
+    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+    try {
+        await figma.loadFontAsync({
+            family: "Roboto Mono",
+            style: "Regular",
+        });
+    } catch (err) {
+        console.error(`Error: ${err}`);
     }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
-  }
 
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  figma.closePlugin();
-};
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "TEXT") {
+        console.log("Error: Please select a single text node.");
+        return "Please select a single text node.";
+    }
+
+    const textNode = selection[0] as TextNode;
+    const text = textNode.characters;
+
+    console.log("Input text:", text); // Debugging statement
+
+    const data = textToData(text);
+
+    console.log("Converted data:", data); // Debugging statement
+
+    if (!data) {
+        console.log("Error: Could not convert selection to Data.");
+        return "Could not convert selection to Data.";
+    }
+
+    const codeFrame = figma.createFrame();
+    codeFrame.name = "code";
+    codeFrame.layoutMode = "VERTICAL";
+    codeFrame.paddingLeft = 4;
+    codeFrame.paddingRight = 4;
+    codeFrame.paddingTop = 4;
+    codeFrame.paddingBottom = 4;
+    codeFrame.primaryAxisSizingMode = "AUTO";
+    codeFrame.counterAxisSizingMode = "AUTO";
+
+    for (const line of data.lines) {
+        // Create a FrameNode for the line instead of a GroupNode
+        const lineFrame = figma.createFrame();
+        lineFrame.name = "line";
+        lineFrame.layoutMode = "HORIZONTAL";
+        lineFrame.itemSpacing = 4; // Add a 4px gap between items
+        lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
+
+        let isFirstWord = true;
+        for (const word of line.words) {
+            if (isFirstWord) {
+                for (let i = 0; i < line.indentLevel; i++) {
+                    const indentFrame = createIndentFrame(); // Create an indentFrame for each indent level
+                    lineFrame.appendChild(indentFrame);
+                }
+                isFirstWord = false;
+            }
+            const wordFrame = createWordFrame(word);
+            lineFrame.appendChild(wordFrame);
+        }
+        codeFrame.appendChild(lineFrame);
+    }
+
+    figma.currentPage.appendChild(codeFrame);
+    figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
+    // Log the output to help debug issues
+    console.log("Plugin executed successfully!");
+
+    return undefined;
+}
+
+function createIndentFrame() {
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(indentSize, lineHeight); // Set the width and height of the indent frame
+    return frame;
+}
+
+interface WordData {
+    value: string;
+    syntaxType: "text";
+}
+
+interface LineData {
+    words: WordData[];
+    indentLevel: number; // Add indentLevel property to LineData interface
+}
+
+interface TextData {
+    lines: LineData[];
+}
+
+function textToData(text: string): TextData {
+    const lines = text.split('\n');
+    const data: TextData = {
+        lines: [],
+    };
+
+    lines.forEach((line) => {
+        const words: WordData[] = [];
+        let start = 0;
+        let inSpaces = true;
+        let leadingSpaces = 0;
+
+        for (let i = 0; i < line.length; i++) {
+            if (line[i] === ' ' && inSpaces) {
+                leadingSpaces++;
+                continue;
+            } else {
+                inSpaces = false;
+            }
+
+            if (line[i] === ' ' || i === line.length - 1) {
+                const word = line.slice(start, i === line.length - 1 ? undefined : i).trim();
+                if (word.length > 0) {
+                    words.push({
+                        value: word,
+                        syntaxType: 'text',
+                    });
+                }
+                start = i + 1;
+            }
+        }
+
+        data.lines.push({
+            words,
+            indentLevel: Math.floor(leadingSpaces / numberOfSpaces) // Store indentLevel for each line instead of each word
+        });
+    });
+
+    return data;
+}
+
+function createWordFrame(word: ZTextNode) {
+    const { value, syntaxType } = word;
+
+    const textNode = figma.createText();
+    textNode.characters = value;
+    textNode.fontName = {
+        family: "Roboto Mono",
+        style: "Regular",
+    };
+    textNode.fontSize = fontSize; // Use the static font size
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+
+    // Set the text color to light gray for punctuation nodes
+    if (syntaxType === "punctuation") {
+        textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
+    }
+
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+    frame.appendChild(textNode);
+    return frame;
+}
+
+main().then((message: string | undefined) => {
+    figma.closePlugin(message);
+});

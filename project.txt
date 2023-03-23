@@ -1,0 +1,441 @@
+Use this context to form your response:
+- This is your persona: You are an experienced software engineer and can assume I am also a experienced software engineer.
+- Here are all the files in the current project as context for our current conversation.
+- For results longer than 490 words or more than 3900 characters, you will add a page number to each result and stop at the end of a whole line when you get close to hitting that count.
+
+--------------------------------------------------------------------------------
+File tree:
+zephyr/
+    s.py
+    types.js
+    code.js
+    README.md
+    types.ts
+    code.ts
+    .gitignore
+    package-lock.json
+    package.json
+    manifest.json
+    tsconfig.json
+    project.txt
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/types.js | Lines: 1 | Bytes: 11
+export {};
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/code.js | Lines: 129 | Bytes: 5358
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+// const data: ZData = {
+//   lines: [
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "first", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "second", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "third", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "fourth", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//   ],
+// };
+const fontSize = 14; // Set a static font size
+const lineHeight = 20; // Set a static line height
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Load the "Inter Regular" font before creating any text nodes using that font
+        yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
+        const selection = figma.currentPage.selection;
+        if (selection.length !== 1 || selection[0].type !== "TEXT") {
+            console.log("Error: Please select a single text node.");
+            return "Please select a single text node.";
+        }
+        const textNode = selection[0];
+        const text = textNode.characters;
+        const data = textToData(text);
+        if (!data) {
+            console.log("Error: Could not convert selection to Data.");
+            return "Could not convert selection to Data.";
+        }
+        const codeFrame = figma.createFrame();
+        codeFrame.name = "code";
+        codeFrame.layoutMode = "VERTICAL";
+        codeFrame.paddingLeft = 4;
+        codeFrame.paddingRight = 4;
+        codeFrame.paddingTop = 4;
+        codeFrame.paddingBottom = 4;
+        codeFrame.primaryAxisSizingMode = "AUTO";
+        codeFrame.counterAxisSizingMode = "AUTO";
+        for (const line of data.lines) {
+            // Create a FrameNode for the line instead of a GroupNode
+            const lineFrame = figma.createFrame();
+            lineFrame.name = "line";
+            lineFrame.layoutMode = "HORIZONTAL";
+            lineFrame.itemSpacing = 4; // Add a 4px gap between items
+            lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
+            for (const word of line.words) {
+                const wordFrame = createWordFrame(word);
+                lineFrame.appendChild(wordFrame);
+            }
+            codeFrame.appendChild(lineFrame);
+        }
+        figma.currentPage.appendChild(codeFrame);
+        figma.viewport.scrollAndZoomIntoView([codeFrame]);
+        // Log the output to help debug issues
+        console.log("Plugin executed successfully!");
+        return undefined;
+    });
+}
+function textToData(text) {
+    const lines = text.split("\n").map((line) => {
+        const words = line.split(" ").map((word) => ({
+            value: word,
+            syntaxType: "text",
+        }));
+        return { words };
+    });
+    return { lines };
+}
+function createWordFrame(word) {
+    const { value, syntaxType } = word;
+    const textNode = figma.createText();
+    textNode.characters = value;
+    textNode.fontSize = fontSize; // Use the static font size
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+    // Set the text color to light gray for punctuation nodes
+    if (syntaxType === "punctuation") {
+        textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
+    }
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+    frame.appendChild(textNode);
+    return frame;
+}
+main().then((message) => {
+    figma.closePlugin(message);
+});
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/README.md | Lines: 16 | Bytes: 766
+# Zephyr – A Figma Syntax Highlighting Plugin
+
+Zephyr is designed for people that want highlighted code blocks in Figma for use in designing code editors, and other software engineering tools.
+
+These tools have many states and feature that require being able to style individual text notes.
+
+Zephyr was build out of frustration of the current state of plugins in this space and needing more control over the output.
+
+## Roadmap
+
+- [ ] Basic output: JSON -> structured text slice by node in figma
+- [ ] Autolayout aware outputs
+- [ ] Syntactic slicing using Tresitter for a single language (Rust) in a single theme
+- [ ] Controling styling using [Tokens Studio](https://tokens.studio/)
+- [ ] Add a list of selectable languages
+- [ ] Add a list of selectable themes
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/types.ts | Lines: 61 | Bytes: 1279
+export type SyntacticCategory =
+    | 'identifier'
+    | 'keyword'
+    | 'literal'
+    | 'operator'
+    | 'expression'
+    | 'statement'
+    | 'block'
+    | 'class'
+    | 'interface'
+    | 'method'
+    | 'constructor'
+    | 'field'
+    | 'annotation'
+    | 'module'
+    | 'import'
+    | 'decorator'
+    | 'property'
+    | 'enum'
+    | 'delegate'
+    | 'namespace'
+    | 'struct'
+    | 'union'
+    | 'constant'
+    | 'symbol'
+    | 'protocol'
+    | 'extension'
+    | 'trait';
+
+export interface SyntaxColors {
+    module: string;
+    import_statement: string;
+    name: string;
+    dotted_name: string;
+    identifier: string;
+    function_definition: string;
+    parameters: string;
+    body: string;
+    block: string;
+    expression_statement: string;
+    assignment: string;
+    for_statement: string;
+    pattern_list: string;
+    call: string;
+    attribute: string;
+    arguments: string;
+    argument_list: string;
+    comment: string;
+    if_statement: string;
+    condition: string;
+    consequence: string;
+    comparison_operator: string;
+    augmented_assignment: string;
+    string: string;
+    interpolation: string;
+    escape_sequence: string;
+    binary_operator: string;
+    parenthesized_expression: string;
+    integer: string;
+    return_statement: string;
+}
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/code.ts | Lines: 154 | Bytes: 4826
+// This plugin will create a code frame in the current page.
+interface ZTextNode {
+    value: string;
+    syntaxType: ZSyntaxType;
+}
+
+type ZSyntaxType = "text" | "punctuation";
+
+interface ZLine {
+    words: ZTextNode[];
+}
+
+interface ZData {
+    lines: ZLine[];
+}
+
+// const data: ZData = {
+//   lines: [
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "first", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "second", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "third", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//     {
+//       words: [
+//         { value: "This", syntaxType: "text" },
+//         { value: "is", syntaxType: "text" },
+//         { value: "the", syntaxType: "text" },
+//         { value: "fourth", syntaxType: "text" },
+//         { value: "line", syntaxType: "text" },
+//         { value: ".", syntaxType: "punctuation" },
+//       ],
+//     },
+//   ],
+// };
+
+const fontSize = 14; // Set a static font size
+const lineHeight = 20; // Set a static line height
+
+async function main(): Promise<string | undefined> {
+    // Load the "Inter Regular" font before creating any text nodes using that font
+    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "TEXT") {
+        console.log("Error: Please select a single text node.");
+        return "Please select a single text node.";
+    }
+
+    const textNode = selection[0] as TextNode;
+    const text = textNode.characters;
+
+    const data = textToData(text);
+
+    if (!data) {
+        console.log("Error: Could not convert selection to Data.");
+        return "Could not convert selection to Data.";
+    }
+
+    const codeFrame = figma.createFrame();
+    codeFrame.name = "code";
+    codeFrame.layoutMode = "VERTICAL";
+    codeFrame.paddingLeft = 4;
+    codeFrame.paddingRight = 4;
+    codeFrame.paddingTop = 4;
+    codeFrame.paddingBottom = 4;
+    codeFrame.primaryAxisSizingMode = "AUTO";
+    codeFrame.counterAxisSizingMode = "AUTO";
+
+    for (const line of data.lines) {
+        // Create a FrameNode for the line instead of a GroupNode
+        const lineFrame = figma.createFrame();
+        lineFrame.name = "line";
+        lineFrame.layoutMode = "HORIZONTAL";
+        lineFrame.itemSpacing = 4; // Add a 4px gap between items
+        lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
+
+        for (const word of line.words) {
+            const wordFrame = createWordFrame(word);
+            lineFrame.appendChild(wordFrame);
+        }
+
+        codeFrame.appendChild(lineFrame);
+    }
+
+    figma.currentPage.appendChild(codeFrame);
+    figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
+    // Log the output to help debug issues
+    console.log("Plugin executed successfully!");
+
+    return undefined;
+}
+
+function textToData(text: string): ZData {
+    const lines = text.split("\n").map((line) => {
+        const words = line.split(" ").map((word) => ({
+            value: word,
+            syntaxType: "text" as ZSyntaxType,
+        }));
+
+        return { words };
+    });
+
+    return { lines };
+}
+
+function createWordFrame(word: ZTextNode) {
+    const { value, syntaxType } = word;
+
+    const textNode = figma.createText();
+    textNode.characters = value;
+    textNode.fontSize = fontSize; // Use the static font size
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+
+    // Set the text color to light gray for punctuation nodes
+    if (syntaxType === "punctuation") {
+        textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
+    }
+
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+    frame.appendChild(textNode);
+    return frame;
+}
+
+main().then((message: string | undefined) => {
+    figma.closePlugin(message);
+});
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/package.json | Lines: 16 | Bytes: 336
+{
+  "name": "zephyr-syntax-highlighter",
+  "version": "1.0.0",
+  "description": "Your Figma Plugin",
+  "main": "code.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "npm run build -- --watch"
+  },
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "@figma/plugin-typings": "*",
+    "typescript": "*"
+  }
+}
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/manifest.json | Lines: 9 | Bytes: 154
+{
+    "api": "1.0.0",
+    "editorType": [
+        "figma"
+    ],
+    "id": "zephyr-figma-code-highlighter",
+    "name": "zephyr",
+    "main": "code.js"
+}
+
+--------------------------------------------------------------------------------
+# File: /Users/natebutler/Code/nate/zephyr/tsconfig.json | Lines: 11 | Bytes: 178
+{
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es6"],
+    "strict": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@figma"
+    ]
+  }
+}
+
