@@ -1,4 +1,33 @@
-interface SyntaxColors {
+export type SyntacticCategory =
+    | 'identifier'
+    | 'keyword'
+    | 'literal'
+    | 'operator'
+    | 'expression'
+    | 'statement'
+    | 'block'
+    | 'class'
+    | 'interface'
+    | 'method'
+    | 'constructor'
+    | 'field'
+    | 'annotation'
+    | 'module'
+    | 'import'
+    | 'decorator'
+    | 'property'
+    | 'enum'
+    | 'delegate'
+    | 'namespace'
+    | 'struct'
+    | 'union'
+    | 'constant'
+    | 'symbol'
+    | 'protocol'
+    | 'extension'
+    | 'trait';
+
+export interface SyntaxColors {
     module: string;
     import_statement: string;
     name: string;
