@@ -1,16 +1,18 @@
 {
-    "name": "zephyr-syntax-highlighter",
-    "version": "1.0.0",
-    "description": "Your Figma Plugin",
-    "author": "Nate Butler <iamnbutler@gmail.com>",
-    "license": "MIT",
-    "main": "code.js",
-    "scripts": {
-        "build": "tsc -p tsconfig.json",
-        "watch": "npm run build -- --watch"
-    },
-    "devDependencies": {
-        "@figma/plugin-typings": "*",
-        "typescript": "*"
-    }
+  "name": "zephyr-syntax-highlighter",
+  "version": "1.0.0",
+  "description": "Your Figma Plugin",
+  "author": "Nate Butler <iamnbutler@gmail.com>",
+  "license": "MIT",
+  "main": "code.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "npm run build -- --watch",
+    "format": "prettier --write \"**/*.*(js|jsx|ts|tsx|json)\""
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "*",
+    "typescript": "*",
+    "prettier": "^2.8.6"
+  }
 }
