@@ -12,7 +12,12 @@
   },
   "devDependencies": {
     "@figma/plugin-typings": "*",
-    "typescript": "*",
-    "prettier": "^2.8.6"
+    "prettier": "^2.8.6",
+    "tree-sitter-cli": "^0.20.7",
+    "tree-sitter-rust": "^0.20.3",
+    "typescript": "*"
+  },
+  "dependencies": {
+    "web-tree-sitter": "^0.20.7"
   }
 }

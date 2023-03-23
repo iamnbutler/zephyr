@@ -1,3 +1,16 @@
+import * as Parser from "web-tree-sitter";
+
+async function initializeTreeSitter() {
+  await Parser.init();
+  const parser = new Parser();
+  const Lang = await Parser.Language.load('./tree-sitter/languages/rust/tree-sitter-rust.wasm');
+  parser.setLanguage(Lang);
+  const tree = parser.parse('let mut x = 1;');
+  console.log(tree.rootNode.toString());
+}
+
+initializeTreeSitter();
+
 // This plugin will create a code frame in the current page.
 interface ZTextNode {
   value: string;
@@ -99,6 +112,13 @@ function createIndentFrame() {
   frame.resizeWithoutConstraints(indentSize, lineHeight); // Set the width and height of the indent frame
   return frame;
 }
+
+// TODO
+// Import treesitter and get basic hello world working
+// Get some rust code samples to use
+// Find what we need to get rust bindings working with treesitter
+// Connect our highlights.scm to treesitter
+// Apply the correct syntaxType to out data object for each node
 
 interface WordData {
   value: string;
