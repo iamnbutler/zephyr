@@ -8,9 +8,11 @@ Zephyr was build out of frustration of the current state of plugins in this spac
 
 ## Roadmap
 
-- [ ] Basic output: JSON -> structured text slice by node in figma
-- [ ] Autolayout aware outputs
-- [ ] Syntactic slicing using Tresitter for a single language (Rust) in a single theme
+- [x] Basic output: JSON -> structured text slice by node in figma
+- [x] Autolayout aware outputs
+
+- [ ] Syntactic slicing using Tresitter for a single language (Rust)
+- [ ] Highlight syntax tree in a single theme
 - [ ] Controling styling using [Tokens Studio](https://tokens.studio/)
 - [ ] Add a list of selectable languages
 - [ ] Add a list of selectable themes
