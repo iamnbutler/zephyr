@@ -54,11 +54,11 @@ async function main(): Promise<string | undefined> {
   const textNode = selection[0] as TextNode;
   const text = textNode.characters;
 
-  console.log("Input text:", text); // Debugging statement
+  // console.log("Input text:", text); // Debugging statement
 
   const data = textToData(text);
 
-  console.log("Converted data:", data); // Debugging statement
+  // console.log("Converted data:", data); // Debugging statement
 
   if (!data) {
     console.log("Error: Could not convert selection to Data.");
