@@ -1,7 +1,7 @@
 {
   "name": "zephyr-syntax-highlighter",
-  "version": "1.0.0",
-  "description": "Your Figma Plugin",
+  "version": "0.1.0",
+  "description": "Build highlighted syntax trees in Figma",
   "author": "Nate Butler <iamnbutler@gmail.com>",
   "license": "MIT",
   "main": "code.js",
