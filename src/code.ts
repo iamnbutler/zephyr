@@ -1,55 +1,72 @@
+import * as Prism from 'prismjs';
+import 'prismjs/components/prism-rust'; // Load the Rust language definition for Prism
+
 const fontSize = 14;
 const lineHeight = 20;
 const charWidth = 9;
 const numberOfSpaces = 2;
 const indentSize = charWidth * numberOfSpaces;
 
-const syntaxTree = `source_file [0, 0] - [9, 0]
+const staticText = `impl gpui::View for TextView {
+  fn ui_name() -> & 'static str {
+    "View"
+  }
+
+  fn render(& mut self, _: & mut gpui:: RenderContext<Self>) -> gpui::ElementBox {
+    TextElement.boxed()
+  }
+}
+`
+
+const syntaxTree = `source_file [0, 0] - [10, 0]
   impl_item [0, 0] - [8, 1]
     trait: scoped_type_identifier [0, 5] - [0, 15]
       path: identifier [0, 5] - [0, 9]
       name: type_identifier [0, 11] - [0, 15]
     type: type_identifier [0, 20] - [0, 28]
     body: declaration_list [0, 29] - [8, 1]
-      function_item [1, 4] - [3, 5]
-        name: identifier [1, 7] - [1, 14]
-        parameters: parameters [1, 14] - [1, 16]
-        return_type: reference_type [1, 20] - [1, 32]
-          lifetime [1, 21] - [1, 28]
-            identifier [1, 22] - [1, 28]
-          type: primitive_type [1, 29] - [1, 32]
-        body: block [1, 33] - [3, 5]
-          string_literal [2, 8] - [2, 14]
-      function_item [5, 4] - [7, 5]
-        name: identifier [5, 7] - [5, 13]
-        parameters: parameters [5, 13] - [5, 59]
-          self_parameter [5, 14] - [5, 23]
-            mutable_specifier [5, 15] - [5, 18]
-            self [5, 19] - [5, 23]
-          parameter [5, 25] - [5, 58]
-            type: reference_type [5, 28] - [5, 58]
+      function_item [1, 2] - [3, 3]
+        name: identifier [1, 5] - [1, 12]
+        parameters: parameters [1, 12] - [1, 14]
+        return_type: reference_type [1, 18] - [1, 31]
+          lifetime [1, 20] - [1, 27]
+            identifier [1, 21] - [1, 27]
+          type: primitive_type [1, 28] - [1, 31]
+        body: block [1, 32] - [3, 3]
+          string_literal [2, 4] - [2, 10]
+      function_item [5, 2] - [7, 3]
+        name: identifier [5, 5] - [5, 11]
+        parameters: parameters [5, 11] - [5, 60]
+          self_parameter [5, 12] - [5, 22]
+            mutable_specifier [5, 14] - [5, 17]
+            self [5, 18] - [5, 22]
+          parameter [5, 24] - [5, 59]
+            type: reference_type [5, 27] - [5, 59]
               mutable_specifier [5, 29] - [5, 32]
-              type: generic_type [5, 33] - [5, 58]
-                type: scoped_type_identifier [5, 33] - [5, 52]
+              type: generic_type [5, 33] - [5, 59]
+                type: scoped_type_identifier [5, 33] - [5, 53]
                   path: identifier [5, 33] - [5, 37]
-                  name: type_identifier [5, 39] - [5, 52]
-                type_arguments: type_arguments [5, 52] - [5, 58]
-                  type_identifier [5, 53] - [5, 57]
-        return_type: scoped_type_identifier [5, 63] - [5, 79]
-          path: identifier [5, 63] - [5, 67]
-          name: type_identifier [5, 69] - [5, 79]
-        body: block [5, 80] - [7, 5]
-          call_expression [6, 8] - [6, 27]
-            function: field_expression [6, 8] - [6, 25]
-              value: identifier [6, 8] - [6, 19]
-              field: field_identifier [6, 20] - [6, 25]
-            arguments: arguments [6, 25] - [6, 27]`;
+                  name: type_identifier [5, 40] - [5, 53]
+                type_arguments: type_arguments [5, 53] - [5, 59]
+                  type_identifier [5, 54] - [5, 58]
+        return_type: scoped_type_identifier [5, 64] - [5, 80]
+          path: identifier [5, 64] - [5, 68]
+          name: type_identifier [5, 70] - [5, 80]
+        body: block [5, 81] - [7, 3]
+          call_expression [6, 4] - [6, 23]
+            function: field_expression [6, 4] - [6, 21]
+              value: identifier [6, 4] - [6, 15]
+              field: field_identifier [6, 16] - [6, 21]
+            arguments: arguments [6, 21] - [6, 23]`;
+
+const highlightedCode = Prism.highlight(staticText, Prism.languages.rust, 'rust');
+const jsonOutput = Prism.highlightWithResult(staticText, Prism.languages.rust, 'rust');
 
 async function main(): Promise<string | undefined> {
   await loadFont();
-  const textNode = await getSelectedTextNode();
-  const text = textNode.characters;
-  const data = treeToData(syntaxTree, text);
+  console.log(highlightedCode);
+  console.log(jsonOutput);
+  const data = treeToData(syntaxTree, staticText);
   const codeFrame = createCodeFrame(data);
   figma.currentPage.appendChild(codeFrame);
   figma.viewport.scrollAndZoomIntoView([codeFrame]);
@@ -68,15 +85,6 @@ async function loadFont() {
   }
 }
 
-async function getSelectedTextNode(): Promise<TextNode> {
-  const selection = figma.currentPage.selection;
-  if (selection.length !== 1 || selection[0].type !== "TEXT") {
-    console.log("Error: Please select a single text node.");
-    throw new Error("Please select a single text node.");
-  }
-  return selection[0] as TextNode;
-}
-
 function treeToData(tree: string, text: string): TextData {
   const data: TextData = {
     lines: [],
@@ -87,9 +95,15 @@ function treeToData(tree: string, text: string): TextData {
 
   // Process each line in the tree
   for (const treeLine of treeLines) {
+    // Skip the source_file line
+    if (treeLine.startsWith("source_file")) {
+      continue;
+    }
+
     const match = treeLine.match(/^\s*([^\s]+) \[([\d, ]+)\]/);
 
     if (!match) {
+      console.error("Error processing line:", treeLine);
       continue;
     }
 
