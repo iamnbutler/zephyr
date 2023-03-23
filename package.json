@@ -6,13 +6,20 @@
   "license": "MIT",
   "main": "code.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "webpack",
     "watch": "npm run build -- --watch",
     "format": "prettier --write \"**/*.*(js|jsx|ts|tsx|json)\""
   },
   "devDependencies": {
     "@figma/plugin-typings": "*",
-    "typescript": "*",
-    "prettier": "^2.8.6"
+    "prettier": "^2.8.6",
+    "ts-loader": "^9.4.2",
+    "typescript": "^5.0.2",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "@types/prismjs": "^1.26.0",
+    "prismjs": "^1.29.0"
   }
 }
