@@ -1,6 +1,6 @@
-const fontSize = 14; // Set a static font size
-const lineHeight = 20; // Set a static line height
-const charWidth = 9; // The width of a single character. This will impact indent size
+const fontSize = 14;
+const lineHeight = 20;
+const charWidth = 9;
 const numberOfSpaces = 2;
 const indentSize = charWidth * numberOfSpaces;
 
@@ -46,6 +46,18 @@ const syntaxTree = `source_file [0, 0] - [9, 0]
             arguments: arguments [6, 25] - [6, 27]`;
 
 async function main(): Promise<string | undefined> {
+  await loadFont();
+  const textNode = await getSelectedTextNode();
+  const text = textNode.characters;
+  const data = treeToData(syntaxTree, text);
+  const codeFrame = createCodeFrame(data);
+  figma.currentPage.appendChild(codeFrame);
+  figma.viewport.scrollAndZoomIntoView([codeFrame]);
+  console.log("Plugin executed successfully!");
+  return undefined;
+}
+
+async function loadFont() {
   try {
     await figma.loadFontAsync({
       family: "Roboto Mono",
@@ -54,69 +66,15 @@ async function main(): Promise<string | undefined> {
   } catch (err) {
     console.error(`Error: ${err}`);
   }
+}
 
+async function getSelectedTextNode(): Promise<TextNode> {
   const selection = figma.currentPage.selection;
   if (selection.length !== 1 || selection[0].type !== "TEXT") {
     console.log("Error: Please select a single text node.");
-    return "Please select a single text node.";
+    throw new Error("Please select a single text node.");
   }
-
-  const textNode = selection[0] as TextNode;
-  const text = textNode.characters;
-
-  const data = treeToData(syntaxTree, text);
-
-  if (!data) {
-    console.log("Error: Could not convert selection to Data.");
-    return "Could not convert selection to Data.";
-  }
-
-  const codeFrame = figma.createFrame();
-  codeFrame.name = "code";
-  codeFrame.layoutMode = "VERTICAL";
-  codeFrame.paddingLeft = 4;
-  codeFrame.paddingRight = 4;
-  codeFrame.paddingTop = 4;
-  codeFrame.paddingBottom = 4;
-  codeFrame.primaryAxisSizingMode = "AUTO";
-  codeFrame.counterAxisSizingMode = "AUTO";
-
-  for (const line of data.lines) {
-    // Create a FrameNode for the line instead of a GroupNode
-    const lineFrame = figma.createFrame();
-    lineFrame.name = "line";
-    lineFrame.layoutMode = "HORIZONTAL";
-    lineFrame.itemSpacing = 4; // Add a 4px gap between items
-    lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
-
-    let isFirstWord = true;
-    for (const word of line.words) {
-      if (isFirstWord) {
-        for (let i = 0; i < line.indentLevel; i++) {
-          const indentFrame = createIndentFrame(); // Create an indentFrame for each indent level
-          lineFrame.appendChild(indentFrame);
-        }
-        isFirstWord = false;
-      }
-      const wordFrame = createWordFrame(word);
-      lineFrame.appendChild(wordFrame);
-    }
-    codeFrame.appendChild(lineFrame);
-  }
-
-  figma.currentPage.appendChild(codeFrame);
-  figma.viewport.scrollAndZoomIntoView([codeFrame]);
-
-  // Log the output to help debug issues
-  console.log("Plugin executed successfully!");
-
-  return undefined;
-}
-
-function createIndentFrame() {
-  const frame = figma.createFrame();
-  frame.resizeWithoutConstraints(indentSize, lineHeight); // Set the width and height of the indent frame
-  return frame;
+  return selection[0] as TextNode;
 }
 
 function treeToData(tree: string, text: string): TextData {
@@ -171,6 +129,64 @@ function treeToData(tree: string, text: string): TextData {
   return data;
 }
 
+function createCodeFrame(data: TextData): FrameNode {
+  const codeFrame = figma.createFrame();
+  setCodeFrameProperties(codeFrame);
+
+  for (const line of data.lines) {
+    const lineFrame = createLineFrame(line);
+    codeFrame.appendChild(lineFrame);
+  }
+  return codeFrame;
+}
+
+function setCodeFrameProperties(codeFrame: FrameNode) {
+  codeFrame.name = "code";
+  codeFrame.layoutMode = "VERTICAL";
+  codeFrame.paddingLeft = 4;
+  codeFrame.paddingRight = 4;
+  codeFrame.paddingTop = 4;
+  codeFrame.paddingBottom = 4;
+  codeFrame.primaryAxisSizingMode = "AUTO";
+  codeFrame.counterAxisSizingMode = "AUTO";
+}
+
+function createLineFrame(line: LineData): FrameNode {
+  const lineFrame = figma.createFrame();
+  setLineFrameProperties(lineFrame);
+
+  let isFirstWord = true;
+  for (const word of line.words) {
+    if (isFirstWord) {
+      addIndentFrames(lineFrame, line.indentLevel);
+      isFirstWord = false;
+    }
+    const wordFrame = createWordFrame(word);
+    lineFrame.appendChild(wordFrame);
+  }
+  return lineFrame;
+}
+
+function setLineFrameProperties(lineFrame: FrameNode) {
+  lineFrame.name = "line";
+  lineFrame.layoutMode = "HORIZONTAL";
+  lineFrame.itemSpacing = 4;
+  lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight);
+}
+
+function addIndentFrames(lineFrame: FrameNode, indentLevel: number) {
+  for (let i = 0; i < indentLevel; i++) {
+    const indentFrame = createIndentFrame();
+    lineFrame.appendChild(indentFrame);
+  }
+}
+
+function createIndentFrame(): FrameNode {
+  const frame = figma.createFrame();
+  frame.resizeWithoutConstraints(indentSize, lineHeight);
+  return frame;
+}
+
 interface WordData {
   value: string;
   syntaxType: "text" | "punctuation";
@@ -178,34 +194,41 @@ interface WordData {
 
 interface LineData {
   words: WordData[];
-  indentLevel: number; // Add indentLevel property to LineData interface
+  indentLevel: number;
 }
 
 interface TextData {
   lines: LineData[];
 }
 
-function createWordFrame(word: WordData) {
+function createWordFrame(word: WordData): FrameNode {
   const { value, syntaxType } = word;
 
   const textNode = figma.createText();
+  setTextNodeProperties(textNode, value, syntaxType);
+
+  const frame = figma.createFrame();
+  setFrameProperties(frame, textNode);
+  frame.appendChild(textNode);
+  return frame;
+}
+
+function setTextNodeProperties(textNode: TextNode, value: string, syntaxType: "text" | "punctuation") {
   textNode.characters = value;
   textNode.fontName = {
     family: "Roboto Mono",
     style: "Regular",
   };
-  textNode.fontSize = fontSize; // Use the static font size
-  textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
+  textNode.fontSize = fontSize;
+  textNode.lineHeight = { value: lineHeight, unit: "PIXELS" };
 
-  // Set the text color to light gray for punctuation nodes
   if (syntaxType === "punctuation") {
     textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
   }
+}
 
-  const frame = figma.createFrame();
-  frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
-  frame.appendChild(textNode);
-  return frame;
+function setFrameProperties(frame: FrameNode, textNode: TextNode) {
+  frame.resizeWithoutConstraints(textNode.width, lineHeight);
 }
 
 main().then((message: string | undefined) => {
