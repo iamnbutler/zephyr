@@ -3,19 +3,84 @@ import { lexer, language } from "./lexer";
 const fontSize = 14;
 const lineHeight = 20;
 const charWidth = 9;
-const numberOfSpaces = 2;
+const numberOfSpaces = 4;
 const indentSize = charWidth * numberOfSpaces;
 
-const staticText = `impl gpui::View for TextView {
-  fn ui_name() -> & 'static str {
-    "View"
-  }
-
-  fn render(& mut self, _: & mut gpui:: RenderContext<Self>) -> gpui::ElementBox {
-    TextElement.boxed()
-  }
-}
+const staticText = `use gpui::{
+    color::Color,
+    fonts::{Properties, Weight},
+    text_layout::RunStyle,
+    DebugContext, Element as _, MeasurementContext, Quad,
+};
+use log::LevelFilter;
+use pathfinder_geometry::rect::RectF;
+use simplelog::SimpleLogger;
+use std::ops::Range;
 `
+
+export interface ErrorRule {
+  error: true;
+}
+
+export interface FallbackRule {
+  fallback: true;
+}
+
+export type TypeMapper = (x: string) => string;
+
+export interface Rule {
+  match?: RegExp | string | string[] | undefined;
+  lineBreaks?: boolean | undefined;
+  push?: string | undefined;
+  pop?: number | undefined;
+  next?: string | undefined;
+  error?: true | undefined;
+  value?: ((x: string) => string) | undefined;
+  type?: TypeMapper | undefined;
+}
+export interface Rules {
+  [x: string]: RegExp | string | string[] | Rule | Rule[] | ErrorRule | FallbackRule;
+}
+
+export interface Lexer {
+  formatError(token: Token, message?: string): string;
+  has(tokenType: string): boolean;
+  next(): Token | undefined;
+  reset(chunk?: string, state?: LexerState): this;
+  save(): LexerState;
+  pushState(state: string): void;
+  popState(): void;
+  setState(state: string): void;
+
+  [Symbol.iterator](): Iterator<Token>;
+}
+
+export interface Token {
+  toString(): string;
+  type?: string | undefined;
+  value: string;
+  offset: number;
+  text: string;
+  lineBreaks: number;
+  line: number;
+  col: number;
+}
+
+export interface LexerState {
+  line: number;
+  col: number;
+  state: string;
+}
+
+
+interface LineData {
+  words: Token[];
+  indentLevel: number
+}
+
+interface TextData {
+  lines: LineData[];
+}
 
 const stringToTokens = lexer(language.rust)
 const tokens = stringToTokens.reset(staticText)
@@ -23,15 +88,41 @@ for (const token of tokens) {
   console.log(token);
 }
 
+function buildTree(tokens: Token[]) {
+  const tree: TextData = { lines: [] };
+  let currentLine: LineData = { words: [], indentLevel: 0 };
+  for (const token of tokens) {
+    if (token.line > currentLine.words[0]?.line || !currentLine.words.length) {
+      tree.lines.push(currentLine);
+      currentLine = { words: [], indentLevel: 0 };
+    }
+    currentLine.words.push(token);
+    if (token.lineBreaks) {
+      const whitespace = token.value.match(/^\s+/);
+      if (whitespace) {
+        currentLine.indentLevel = whitespace[0].length;
+      }
+    }
+  }
+  tree.lines.push(currentLine);
+  return tree;
+}
+
 async function main(): Promise<string | undefined> {
+  const stringToTokens = lexer(language.rust);
+  const tokens = stringToTokens.reset(staticText);
+
   await loadFont();
-  // const data = treeToData(syntaxTree, staticText);
-  // const codeFrame = createCodeFrame(data);
-  // figma.currentPage.appendChild(codeFrame);
-  // figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
+  const data = treeToData(tokens);
+  const codeFrame = createCodeFrame(data);
+  figma.currentPage.appendChild(codeFrame);
+  figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
   console.log("Plugin executed successfully!");
   return undefined;
 }
+
 
 async function loadFont() {
   try {
@@ -42,64 +133,6 @@ async function loadFont() {
   } catch (err) {
     console.error(`Error: ${err}`);
   }
-}
-
-function treeToData(tree: string, text: string): TextData {
-  const data: TextData = {
-    lines: [],
-  };
-
-  // Split the tree string into lines
-  const treeLines = tree.split("\n");
-
-  // Process each line in the tree
-  for (const treeLine of treeLines) {
-    // Skip the source_file line
-    if (treeLine.startsWith("source_file")) {
-      continue;
-    }
-
-    const match = treeLine.match(/^\s*([^\s]+) \[([\d, ]+)\]/);
-
-    if (!match) {
-      console.error("Error processing line:", treeLine);
-      continue;
-    }
-
-    const [_, type, rangeStr] = match;
-    const [startRow, startCol, endRow, endCol] = rangeStr
-      .split(", ")
-      .map((n) => parseInt(n, 10));
-
-    // Extract the corresponding text from the source
-    const sourceLines = text.split("\n").slice(startRow, endRow + 1);
-    if (startRow === endRow) {
-      sourceLines[0] = sourceLines[0].slice(startCol, endCol);
-    } else {
-      sourceLines[0] = sourceLines[0].slice(startCol);
-      sourceLines[sourceLines.length - 1] = sourceLines[
-        sourceLines.length - 1
-      ].slice(0, endCol);
-    }
-
-    const sourceText = sourceLines.join("\n");
-
-    // Convert the source text to words and add them to the TextData structure
-    const words: WordData[] = [
-      {
-        value: sourceText,
-        syntaxType: type === "identifier" ? "text" : "punctuation",
-      },
-    ];
-
-    const indentLevel = startCol / numberOfSpaces;
-    data.lines.push({
-      words,
-      indentLevel,
-    });
-  }
-
-  return data;
 }
 
 function createCodeFrame(data: TextData): FrameNode {
@@ -160,21 +193,7 @@ function createIndentFrame(): FrameNode {
   return frame;
 }
 
-interface WordData {
-  value: string;
-  syntaxType: "text" | "punctuation";
-}
-
-interface LineData {
-  words: WordData[];
-  indentLevel: number;
-}
-
-interface TextData {
-  lines: LineData[];
-}
-
-function createWordFrame(word: WordData): FrameNode {
+function createWordFrame(word): FrameNode {
   const { value, syntaxType } = word;
 
   const textNode = figma.createText();
