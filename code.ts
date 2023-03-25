@@ -1,185 +1,220 @@
-// This plugin will create a code frame in the current page.
-interface ZTextNode {
-  value: string;
-  syntaxType: ZSyntaxType;
+type HighlightType =
+  | "operator"
+  | "string"
+  | "variable"
+  | "punctuation.delimiter"
+  | "punctuation.bracket"
+  | "property"
+  | "type"
+  | "keyword"
+  | null;
+
+interface ZedHighlightNode {
+  text: string;
+  highlight: HighlightType;
 }
 
-type ZSyntaxType = "text" | "punctuation";
+type ZedHighlightArray = ZedHighlightNode[][];
 
-interface ZLine {
-  words: ZTextNode[];
-}
+const code: ZedHighlightArray = [
+  [
+    {
+      text: "#",
+      highlight: null,
+    },
+    {
+      text: "[",
+      highlight: "punctuation.bracket",
+    },
+    {
+      text: "derive",
+      highlight: null,
+    },
+    {
+      text: "(",
+      highlight: "punctuation.bracket",
+    },
+    {
+      text: "Default",
+      highlight: "type",
+    },
+    {
+      text: ")",
+      highlight: "punctuation.bracket",
+    },
+    {
+      text: "]",
+      highlight: "punctuation.bracket",
+    },
+    {
+      text: "",
+      highlight: null,
+    },
+  ],
+  [
+    {
+      text: "",
+      highlight: null,
+    },
+    {
+      text: "pub",
+      highlight: "keyword",
+    },
+    {
+      text: " ",
+      highlight: null,
+    },
+    {
+      text: "struct",
+      highlight: "keyword",
+    },
+    {
+      text: " ",
+      highlight: null,
+    },
+    {
+      text: "Em",
+      highlight: "type",
+    },
+    {
+      text: "pty",
+      highlight: "type",
+    },
+    {
+      text: " ",
+      highlight: null,
+    },
+    {
+      text: "{",
+      highlight: "punctuation.bracket",
+    },
+    {
+      text: "",
+      highlight: null,
+    },
+  ],
+  [
+    {
+      text: "    ",
+      highlight: null,
+    },
+    {
+      text: "collapsed",
+      highlight: "property",
+    },
+    {
+      text: ": ",
+      highlight: null,
+    },
+    {
+      text: "bool",
+      highlight: "type",
+    },
+    {
+      text: ",",
+      highlight: null,
+    },
+  ],
+];
 
-interface ZData {
-  lines: ZLine[];
-}
-
-const fontSize = 14; // Set a static font size
-const lineHeight = 20; // Set a static line height
-const charWidth = 9; // The width of a single character. This will impact indent size
-const numberOfSpaces = 2;
-const indentSize = charWidth * numberOfSpaces;
-
-async function main(): Promise<string | undefined> {
-  // Load the "Inter Regular" font before creating any text nodes using that font
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-  try {
-    await figma.loadFontAsync({
-      family: "Roboto Mono",
-      style: "Regular",
-    });
-  } catch (err) {
-    console.error(`Error: ${err}`);
-  }
-
-  const selection = figma.currentPage.selection;
-  if (selection.length !== 1 || selection[0].type !== "TEXT") {
-    console.log("Error: Please select a single text node.");
-    return "Please select a single text node.";
-  }
-
-  const textNode = selection[0] as TextNode;
-  const text = textNode.characters;
-
-  console.log("Input text:", text); // Debugging statement
-
-  const data = textToData(text);
-
-  console.log("Converted data:", data); // Debugging statement
-
-  if (!data) {
-    console.log("Error: Could not convert selection to Data.");
-    return "Could not convert selection to Data.";
-  }
-
-  const codeFrame = figma.createFrame();
-  codeFrame.name = "code";
-  codeFrame.layoutMode = "VERTICAL";
-  codeFrame.paddingLeft = 4;
-  codeFrame.paddingRight = 4;
-  codeFrame.paddingTop = 4;
-  codeFrame.paddingBottom = 4;
-  codeFrame.primaryAxisSizingMode = "AUTO";
-  codeFrame.counterAxisSizingMode = "AUTO";
-
-  for (const line of data.lines) {
-    // Create a FrameNode for the line instead of a GroupNode
-    const lineFrame = figma.createFrame();
-    lineFrame.name = "line";
-    lineFrame.layoutMode = "HORIZONTAL";
-    lineFrame.itemSpacing = 4; // Add a 4px gap between items
-    lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight); // Set the height of the line frame to the static line height
-
-    let isFirstWord = true;
-    for (const word of line.words) {
-      if (isFirstWord) {
-        for (let i = 0; i < line.indentLevel; i++) {
-          const indentFrame = createIndentFrame(); // Create an indentFrame for each indent level
-          lineFrame.appendChild(indentFrame);
-        }
-        isFirstWord = false;
-      }
-      const wordFrame = createWordFrame(word);
-      lineFrame.appendChild(wordFrame);
-    }
-    codeFrame.appendChild(lineFrame);
-  }
-
-  figma.currentPage.appendChild(codeFrame);
-  figma.viewport.scrollAndZoomIntoView([codeFrame]);
-
-  // Log the output to help debug issues
-  console.log("Plugin executed successfully!");
-
-  return undefined;
-}
+const FONT_SIZE = 14; // Set a static font size
+const LINE_HEIGHT = 20; // Set a static line height
+const CHAR_WIDTH = 9; // The width of a single character. This will impact indent size
+const NUMBER_OF_SPACES_IN_INDENT = 2;
+const INDENT_FRAME_WIDTH = CHAR_WIDTH * NUMBER_OF_SPACES_IN_INDENT;
 
 function createIndentFrame() {
   const frame = figma.createFrame();
-  frame.resizeWithoutConstraints(indentSize, lineHeight); // Set the width and height of the indent frame
+  frame.resizeWithoutConstraints(INDENT_FRAME_WIDTH, LINE_HEIGHT); // Set the width and height of the indent frame
   return frame;
 }
 
-interface WordData {
-  value: string;
-  syntaxType: "text";
-}
+function createLine(line: ZedHighlightNode[]): FrameNode {
+  const lineFrame = figma.createFrame();
+  lineFrame.layoutMode = "HORIZONTAL";
+  lineFrame.primaryAxisAlignItems = "CENTER";
+  lineFrame.counterAxisAlignItems = "CENTER";
 
-interface LineData {
-  words: WordData[];
-  indentLevel: number; // Add indentLevel property to LineData interface
-}
-
-interface TextData {
-  lines: LineData[];
-}
-
-function textToData(text: string): TextData {
-  const lines = text.split("\n");
-  const data: TextData = {
-    lines: [],
-  };
-
-  lines.forEach((line) => {
-    const words: WordData[] = [];
-    let start = 0;
-    let inSpaces = true;
-    let leadingSpaces = 0;
-
-    for (let i = 0; i < line.length; i++) {
-      if (line[i] === " " && inSpaces) {
-        leadingSpaces++;
-        continue;
-      } else {
-        inSpaces = false;
+  for (const node of line) {
+    if (
+      node.highlight === null &&
+      node.text.includes(" ") &&
+      line.indexOf(node) === 0
+    ) {
+      const spacesCount = node.text.length;
+      const indentLevels = spacesCount / NUMBER_OF_SPACES_IN_INDENT;
+      for (let i = 0; i < indentLevels; i++) {
+        const indentFrame = createIndentFrame();
+        lineFrame.appendChild(indentFrame);
       }
-
-      if (line[i] === " " || i === line.length - 1) {
-        const word = line
-          .slice(start, i === line.length - 1 ? undefined : i)
-          .trim();
-        if (word.length > 0) {
-          words.push({
-            value: word,
-            syntaxType: "text",
-          });
-        }
-        start = i + 1;
-      }
+    } else {
+      const wordFrame = createWordFrame(node);
+      lineFrame.appendChild(wordFrame);
     }
+  }
 
-    data.lines.push({
-      words,
-      indentLevel: Math.floor(leadingSpaces / numberOfSpaces), // Store indentLevel for each line instead of each word
-    });
-  });
-
-  return data;
+  return lineFrame;
 }
 
-function createWordFrame(word: ZTextNode) {
-  const { value, syntaxType } = word;
-
+function createWordFrame(node: ZedHighlightNode) {
   const textNode = figma.createText();
-  textNode.characters = value;
+  textNode.characters = node.text;
   textNode.fontName = {
     family: "Roboto Mono",
     style: "Regular",
   };
-  textNode.fontSize = fontSize; // Use the static font size
-  textNode.lineHeight = { value: lineHeight, unit: "PIXELS" }; // Use the static line height
-
-  // Set the text color to light gray for punctuation nodes
-  if (syntaxType === "punctuation") {
-    textNode.fills = [{ type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }];
-  }
+  textNode.fontSize = FONT_SIZE;
+  textNode.lineHeight = { value: LINE_HEIGHT, unit: "PIXELS" };
 
   const frame = figma.createFrame();
-  frame.resizeWithoutConstraints(textNode.width, lineHeight); // Set the height of the text frame to the static line height
+  // Ensure width is never less than 0.01
+  frame.resizeWithoutConstraints(
+    textNode.width <= 0 ? 1 : textNode.width,
+    LINE_HEIGHT
+  );
   frame.appendChild(textNode);
   return frame;
 }
 
-main().then((message: string | undefined) => {
-  figma.closePlugin(message);
-});
+async function main(): Promise<string | undefined> {
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+
+  try {
+    console.log("Loading font...");
+    await figma.loadFontAsync({
+      family: "Roboto Mono",
+      style: "Regular",
+    });
+    console.log("Font loaded.");
+
+    const codeFrame = figma.createFrame();
+    codeFrame.layoutMode = "VERTICAL";
+    codeFrame.primaryAxisSizingMode = "AUTO";
+    codeFrame.counterAxisSizingMode = "AUTO";
+    codeFrame.itemSpacing = 0;
+
+    let totalHeight = 0;
+
+    for (const line of code) {
+      const lineFrame = createLine(line);
+      lineFrame.resize(lineFrame.width, LINE_HEIGHT); // Set lineFrame height to LINE_HEIGHT
+      totalHeight += LINE_HEIGHT;
+      codeFrame.appendChild(lineFrame);
+    }
+
+    codeFrame.resize(codeFrame.width, totalHeight); // Set the codeFrame height to totalHeight
+
+    figma.currentPage.appendChild(codeFrame);
+    figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
+    console.log("Plugin executed successfully!");
+
+    return undefined;
+  } catch (err) {
+    console.error(`Error: ${err}`);
+  } finally {
+    figma.closePlugin();
+  }
+}
+
+main();
