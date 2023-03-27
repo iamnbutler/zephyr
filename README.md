@@ -15,3 +15,6 @@ Zephyr was build out of frustration of the current state of plugins in this spac
 - [ ] Controling styling using [Tokens Studio](https://tokens.studio/)
 - [ ] Add a list of selectable languages
 - [ ] Add a list of selectable themes
+
+## TODO
+Explore using Monarch to chop up code: https://microsoft.github.io/monaco-editor/monarch.html
