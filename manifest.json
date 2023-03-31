@@ -1,7 +1,9 @@
 {
-  "api": "1.0.0",
-  "editorType": ["figma"],
-  "id": "zephyr-figma-code-highlighter",
-  "name": "zephyr",
-  "main": "dist/code.js"
+    "id": "zephyr-figma-code-highlighter",
+    "api": "0.1.0",
+    "editorType": [
+        "figma"
+    ],
+    "name": "zephyr",
+    "main": "dist/code.js"
 }

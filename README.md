@@ -11,10 +11,15 @@ Zephyr was build out of frustration of the current state of plugins in this spac
 - [x] Basic output: JSON -> structured text slice by node in figma
 - [x] Autolayout aware outputs
 - [ ] Syntactic slicing using Tresitter for a single language (Rust)
-- [ ] Highlight syntax tree in a single theme
+- [x] Highlight syntax tree in a single theme
 - [ ] Controling styling using [Tokens Studio](https://tokens.studio/)
 - [ ] Add a list of selectable languages
 - [ ] Add a list of selectable themes
 
-## TODO
-Explore using Monarch to chop up code: https://microsoft.github.io/monaco-editor/monarch.html
+## API Roadmap
+
+Use a Next.js API to process the code from figma
+
+- [ ] Recieve a string from figma and send a response
+- [ ] Return a highlighted array from a Rust string
+- [ ] Use multiple routes or arguments to specify the language to use for highlighting
