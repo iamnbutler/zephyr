@@ -1,0 +1,104 @@
+const fontSize = 14;
+const lineHeight = 20;
+const charWidth = 9;
+const numberOfSpaces = 4;
+const indentSize = charWidth * numberOfSpaces;
+
+async function main(): Promise<string | undefined> {
+    await loadFont();
+
+    const codeFrame = createFrame(style);
+    figma.currentPage.appendChild(codeFrame);
+    figma.viewport.scrollAndZoomIntoView([codeFrame]);
+
+    console.log("Plugin executed successfully!");
+    return undefined;
+}
+
+
+async function loadFont() {
+    try {
+        await figma.loadFontAsync({
+            family: "Roboto Mono",
+            style: "Regular",
+        });
+    } catch (err) {
+        console.error(`Error: ${err}`);
+    }
+}
+
+function setCodeFrameProperties(codeFrame: FrameNode) {
+    codeFrame.name = "code";
+    codeFrame.layoutMode = "VERTICAL";
+    codeFrame.paddingLeft = 4;
+    codeFrame.paddingRight = 4;
+    codeFrame.paddingTop = 4;
+    codeFrame.paddingBottom = 4;
+    codeFrame.primaryAxisSizingMode = "AUTO";
+    codeFrame.counterAxisSizingMode = "AUTO";
+}
+
+function createLineFrame(line: LineData): FrameNode {
+    const lineFrame = figma.createFrame();
+    setLineFrameProperties(lineFrame);
+
+    let isFirstWord = true;
+    for (const word of line.words) {
+        if (isFirstWord) {
+            addIndentFrames(lineFrame, line.indentLevel);
+            isFirstWord = false;
+        }
+        const wordFrame = createTextFrame(text);
+        lineFrame.appendChild(wordFrame);
+    }
+    return lineFrame;
+}
+
+function setLineFrameProperties(lineFrame: FrameNode) {
+    lineFrame.name = "line";
+    lineFrame.layoutMode = "HORIZONTAL";
+    lineFrame.itemSpacing = 4;
+    lineFrame.resizeWithoutConstraints(lineFrame.width, lineHeight);
+}
+
+function addIndentFrames(lineFrame: FrameNode, indentLevel: number) {
+    for (let i = 0; i < indentLevel; i++) {
+        const indentFrame = createIndentFrame();
+        lineFrame.appendChild(indentFrame);
+    }
+}
+
+function createIndentFrame(): FrameNode {
+    const frame = figma.createFrame();
+    frame.resizeWithoutConstraints(indentSize, lineHeight);
+    return frame;
+}
+
+function createTextFrame(text: string): FrameNode {
+
+    const textNode = figma.createText();
+    setTextNodeProperties(textNode, text);
+
+    const frame = figma.createFrame();
+    setFrameProperties(frame, textNode);
+    frame.appendChild(textNode);
+    return frame;
+}
+
+function setTextNodeProperties(textNode: TextNode, value: string) {
+    textNode.characters = value;
+    textNode.fontName = {
+        family: "Roboto Mono",
+        style: "Regular",
+    };
+    textNode.fontSize = fontSize;
+    textNode.lineHeight = { value: lineHeight, unit: "PIXELS" };
+}
+
+function setFrameProperties(frame: FrameNode, textNode: TextNode) {
+    frame.resizeWithoutConstraints(textNode.width, lineHeight);
+}
+
+main().then((message: string | undefined) => {
+    figma.closePlugin(message);
+});
